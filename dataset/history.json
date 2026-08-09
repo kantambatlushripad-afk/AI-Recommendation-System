@@ -1,0 +1,83 @@
+[
+  {
+    "user_id": "2",
+    "selected_categories": [
+      "Software"
+    ],
+    "selected_topics": [
+      "ai",
+      "art",
+      "automation",
+      "creative",
+      "design",
+      "productivity"
+    ],
+    "algorithm": "cosine",
+    "top_n": 5,
+    "results": [
+      {
+        "item_id": "1",
+        "title": "AI Productivity Booster",
+        "score": 0.7559
+      },
+      {
+        "item_id": "6",
+        "title": "Creative Design Toolkit",
+        "score": 0.7559
+      },
+      {
+        "item_id": "2",
+        "title": "Modern Python Course",
+        "score": 0.0
+      },
+      {
+        "item_id": "5",
+        "title": "Healthy Meal Plan",
+        "score": 0.0
+      },
+      {
+        "item_id": "3",
+        "title": "Data Science Book",
+        "score": 0.0
+      }
+    ],
+    "timestamp": "2026-08-09T17:01:33.236457"
+  },
+  {
+    "user_id": "Guest",
+    "selected_categories": [],
+    "selected_topics": [
+      "ai"
+    ],
+    "algorithm": "cosine",
+    "top_n": 5,
+    "results": [
+      {
+        "item_id": "1",
+        "title": "AI Productivity Booster",
+        "score": 0.5
+      },
+      {
+        "item_id": "2",
+        "title": "Modern Python Course",
+        "score": 0.0
+      },
+      {
+        "item_id": "5",
+        "title": "Healthy Meal Plan",
+        "score": 0.0
+      },
+      {
+        "item_id": "3",
+        "title": "Data Science Book",
+        "score": 0.0
+      },
+      {
+        "item_id": "6",
+        "title": "Creative Design Toolkit",
+        "score": 0.0
+      }
+    ],
+    "timestamp": "2026-08-09T18:41:14.097217"
+  }
+]

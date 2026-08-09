@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AI Recommendation System — Results</title>
+    <link rel="stylesheet" href="/static/css/styles.css" />
+</head>
+<body>
+    <div class="bg-blobs">
+        <div class="bg-blob blob-1"></div>
+        <div class="bg-blob blob-2"></div>
+    </div>
+
+    <!-- Navigation Bar -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="/" class="nav-logo">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+                RecSystem AI
+            </a>
+            <ul class="nav-links">
+                <li><a href="/" class="nav-link active">Match Preferences</a></li>
+                <li><a href="/dashboard" class="nav-link">Dashboard</a></li>
+                <li><a href="/manager" class="nav-link">Data Manager</a></li>
+                <li>
+                    <button class="theme-toggle-btn" id="theme-toggle" aria-label="Toggle Theme">
+                        <svg class="dark-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+                        <svg class="light-icon" style="display:none;" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+                    </button>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+    <main>
+        <!-- Results Header Panel -->
+        <section class="glass-panel" style="padding: 2rem; margin-bottom: 2rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+                <div>
+                    <h1 style="font-family: var(--font-display); font-size: 2rem; color: var(--text-title);">AI Suggestions</h1>
+                    <p style="color: var(--text-muted); font-size: 0.95rem; margin-top: 0.25rem;">
+                        Generated using <strong>{{ algorithm | upper }}</strong> similarity for <strong>{{ user_id }}</strong>
+                    </p>
+                </div>
+                <div style="display: flex; gap: 0.75rem;">
+                    <!-- Export recommendations buttons -->
+                    <a href="{{ url_for('export', categories=selected_categories | join(','), topics=selected_topics | join(','), algorithm=algorithm, top_n=top_n, format='json') }}" class="btn btn-secondary" style="padding: 0.6rem 1.2rem; font-size: 0.9rem;">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+                        JSON
+                    </a>
+                    <a href="{{ url_for('export', categories=selected_categories | join(','), topics=selected_topics | join(','), algorithm=algorithm, top_n=top_n, format='csv') }}" class="btn btn-secondary" style="padding: 0.6rem 1.2rem; font-size: 0.9rem;">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+                        CSV
+                    </a>
+                    <a href="/" class="btn btn-primary" style="padding: 0.6rem 1.2rem; font-size: 0.9rem;">Refine Matcher</a>
+                </div>
+            </div>
+        </section>
+
+        <!-- Recommendations Grid -->
+        {% if recommendations %}
+            <div class="results-grid">
+                {% for rec in recommendations %}
+                    <article class="item-card">
+                        <div class="card-top">
+                            <span class="card-category">{{ rec.item.category }}</span>
+                            <span class="card-score">Score: {{ rec.score }}</span>
+                        </div>
+                        
+                        <h2 class="item-title">{{ rec.item.title }}</h2>
+                        
+                        <!-- Ratings Representation -->
+                        <div class="rating-stars">
+                            <!-- Draw full stars and empty stars based on rating value -->
+                            {% set rating = rec.item.rating | float %}
+                            {% set full_stars = rating | int %}
+                            {% set half_star = 1 if (rating - full_stars) >= 0.4 else 0 %}
+                            {% set empty_stars = 5 - full_stars - half_star %}
+                            
+                            {% for i in range(full_stars) %}★{% endfor %}
+                            {% if half_star %}½{% endif %}
+                            {% for i in range(empty_stars) %}☆{% endfor %}
+                            
+                            <span class="rating-num">({{ rating }}/5)</span>
+                        </div>
+                        
+                        <p class="item-desc">{{ rec.item.description }}</p>
+                        
+                        <div class="tags-container">
+                            {% for tag in rec.item.tags %}
+                                <span class="tag-badge">#{{ tag }}</span>
+                            {% endfor %}
+                        </div>
+
+                        <!-- Collapsible Explanations Box -->
+                        <details class="explanation-details">
+                            <summary class="explanation-summary">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                                Explanation
+                            </summary>
+                            <p class="explanation-content">{{ rec.explanation }}</p>
+                        </details>
+
+                        <!-- Actions (Favorite Toggle) -->
+                        <div class="card-actions">
+                            <button class="fav-btn" data-item-id="{{ rec.item.id }}" data-user-id="{{ user_id }}" aria-label="Favorite this item">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="heart-icon"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
+                            </button>
+                        </div>
+                    </article>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="glass-panel" style="text-align: center; padding: 4rem 2rem;">
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="color: var(--text-muted); margin-bottom: 1rem;"><circle cx="12" cy="12" r="10"></circle><line x1="8" y1="12" x2="16" y2="12"></line></svg>
+                <p style="font-size: 1.1rem; font-weight: 500;">No recommendations matched your criteria. Try expanding your interest checklist!</p>
+            </div>
+        {% endif %}
+    </main>
+
+    <footer>
+        <p>Built with Python, Flask, Pandas, Scikit-learn and Chart.js. Created by Shripad Kantambatlu.</p>
+    </footer>
+
+    <script>
+        // Theme Toggle Logic
+        const themeToggleBtn = document.getElementById('theme-toggle');
+        const darkIcon = themeToggleBtn.querySelector('.dark-icon');
+        const lightIcon = themeToggleBtn.querySelector('.light-icon');
+
+        if (localStorage.getItem('theme') === 'dark' || (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.body.classList.add('dark-mode');
+            darkIcon.style.display = 'none';
+            lightIcon.style.display = 'block';
+        }
+
+        themeToggleBtn.addEventListener('click', () => {
+            if (document.body.classList.contains('dark-mode')) {
+                document.body.classList.remove('dark-mode');
+                localStorage.setItem('theme', 'light');
+                darkIcon.style.display = 'block';
+                lightIcon.style.display = 'none';
+            } else {
+                document.body.classList.add('dark-mode');
+                localStorage.setItem('theme', 'dark');
+                darkIcon.style.display = 'none';
+                lightIcon.style.display = 'block';
+            }
+        });
+
+        // Favorite Toggle Request (Saves Preference)
+        const favButtons = document.querySelectorAll('.fav-btn');
+        favButtons.forEach(btn => {
+            const itemId = btn.getAttribute('data-item-id');
+            const userId = btn.getAttribute('data-user-id');
+            
+            // Check in local preference (visual representation)
+            const isFav = localStorage.getItem(`fav_${userId}_${itemId}`) === 'true';
+            if (isFav) {
+                btn.classList.add('active');
+                btn.querySelector('svg').setAttribute('fill', 'var(--color-danger)');
+            }
+
+            btn.addEventListener('click', async () => {
+                if (userId === 'Guest') {
+                    alert("Please select a valid user profile on the main page to save favorites!");
+                    return;
+                }
+
+                const active = btn.classList.contains('active');
+                const preferenceVal = active ? 'dislike' : 'like';
+
+                const formData = new FormData();
+                formData.append('user_id', userId);
+                formData.append('item_id', itemId);
+                formData.append('preference', preferenceVal);
+
+                try {
+                    const response = await fetch('/api/preference', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    const res = await response.json();
+                    if (res.success) {
+                        if (active) {
+                            btn.classList.remove('active');
+                            btn.querySelector('svg').setAttribute('fill', 'none');
+                            localStorage.setItem(`fav_${userId}_${itemId}`, 'false');
+                        } else {
+                            btn.classList.add('active');
+                            btn.querySelector('svg').setAttribute('fill', 'var(--color-danger)');
+                            localStorage.setItem(`fav_${userId}_${itemId}`, 'true');
+                        }
+                    }
+                } catch (err) {
+                    console.error("Failed to update preference: ", err);
+                }
+            });
+        });
+    </script>
+</body>
+</html>

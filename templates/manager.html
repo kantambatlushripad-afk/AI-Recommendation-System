@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AI Recommendation System — Data Manager</title>
+    <link rel="stylesheet" href="/static/css/styles.css" />
+</head>
+<body>
+    <div class="bg-blobs">
+        <div class="bg-blob blob-1"></div>
+        <div class="bg-blob blob-2"></div>
+    </div>
+
+    <!-- Navigation Bar -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="/" class="nav-logo">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+                RecSystem AI
+            </a>
+            <ul class="nav-links">
+                <li><a href="/" class="nav-link">Match Preferences</a></li>
+                <li><a href="/dashboard" class="nav-link">Dashboard</a></li>
+                <li><a href="/manager" class="nav-link active">Data Manager</a></li>
+                <li>
+                    <button class="theme-toggle-btn" id="theme-toggle" aria-label="Toggle Theme">
+                        <svg class="dark-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+                        <svg class="light-icon" style="display:none;" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+                    </button>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+    <main>
+        <!-- Hero Section -->
+        <header class="hero">
+            <h1>Data Management Center</h1>
+            <p>Expand the recommendation dataset by registering new catalog items, creating user profiles, and mapping preferences.</p>
+        </header>
+
+        <!-- Flash messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="alerts-container">
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }}">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        <div style="display: grid; grid-template-columns: 3.5fr 2.5fr; gap: 2rem; align-items: start;">
+            <!-- Left Side: Database Forms Panel -->
+            <section class="glass-panel" style="margin-bottom:0;">
+                <!-- Form Tabs -->
+                <div class="tabs-container">
+                    <button class="tab-btn active" onclick="switchTab(event, 'item-tab')">Add Catalog Item</button>
+                    <button class="tab-btn" onclick="switchTab(event, 'user-tab')">Create User</button>
+                    <button class="tab-btn" onclick="switchTab(event, 'pref-tab')">Map Preference</button>
+                </div>
+
+                <!-- Tab 1: Add Item Panel -->
+                <div id="item-tab" class="tab-panel active">
+                    <form method="POST" action="/manager">
+                        <input type="hidden" name="action" value="add_item" />
+                        <div class="form-group">
+                            <label for="title" class="form-label">Item Title</label>
+                            <input type="text" name="title" id="title" class="form-control" placeholder="e.g. Flutter Development Bootcamp" required />
+                        </div>
+                        <div class="form-group" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                            <div>
+                                <label for="category" class="form-label">Category</label>
+                                <input type="text" name="category" id="category" class="form-control" placeholder="e.g. Education" required />
+                            </div>
+                            <div>
+                                <label for="rating" class="form-label">Rating (0.0 to 5.0)</label>
+                                <input type="number" name="rating" id="rating" min="0.0" max="5.0" step="0.1" class="form-control" placeholder="e.g. 4.8" required />
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="description" class="form-label">Description</label>
+                            <textarea name="description" id="description" rows="3" class="form-control" style="resize:none;" placeholder="Provide a brief summary of the item contents or benefits..."></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="tags" class="form-label">Tags / Keywords (comma separated)</label>
+                            <input type="text" name="tags" id="tags" class="form-control" placeholder="e.g. mobile, flutter, learning, code" />
+                        </div>
+                        <button type="submit" class="btn btn-success" style="width:100%;">Add Item to Catalog</button>
+                    </form>
+                </div>
+
+                <!-- Tab 2: Add User Panel -->
+                <div id="user-tab" class="tab-panel">
+                    <form method="POST" action="/manager">
+                        <input type="hidden" name="action" value="add_user" />
+                        <div class="form-group">
+                            <label for="name" class="form-label">User Name</label>
+                            <input type="text" name="name" id="name" class="form-control" placeholder="e.g. Diana Prince" required />
+                        </div>
+                        <div class="form-group">
+                            <label for="favorite_category" class="form-label">Favorite Category</label>
+                            <input type="text" name="favorite_category" id="favorite_category" class="form-control" placeholder="e.g. Books" />
+                        </div>
+                        <button type="submit" class="btn btn-success" style="width:100%;">Create User Profile</button>
+                    </form>
+                </div>
+
+                <!-- Tab 3: Add Preference Map Panel -->
+                <div id="pref-tab" class="tab-panel">
+                    <form method="POST" action="/manager">
+                        <input type="hidden" name="action" value="add_preference" />
+                        <div class="form-group">
+                            <label for="pref-user" class="form-label">Choose User</label>
+                            <select name="user_id" id="pref-user" class="form-control" required>
+                                <option value="" disabled selected>Select user...</option>
+                                {% for u in users %}
+                                    <option value="{{ u.id }}">{{ u.name }} (ID: {{ u.id }})</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="pref-item" class="form-label">Choose Catalog Item</label>
+                            <select name="item_id" id="pref-item" class="form-control" required>
+                                <option value="" disabled selected>Select item...</option>
+                                {% for item in items %}
+                                    <option value="{{ item.id }}">{{ item.title }} ({{ item.category }})</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="preference" class="form-label">Preference Type</label>
+                            <select name="preference" id="preference" class="form-control">
+                                <option value="like">Like (Adds to recommended scoring weights)</option>
+                                <option value="dislike">Dislike (Lowers relevance matching)</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-success" style="width:100%;">Save Preference Mapping</button>
+                    </form>
+                </div>
+            </section>
+
+            <!-- Right Side: Database Quick Inspect List -->
+            <section class="glass-panel" style="margin-bottom:0; max-height: 520px; overflow-y: auto; padding:1.75rem;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                    <h2 class="panel-title" style="margin-bottom:0; font-size:1.2rem;">Inspect Database</h2>
+                    <input type="text" id="inspect-search" placeholder="Search rows..." class="form-control" style="font-size:0.8rem; padding:0.4rem 0.75rem; max-width: 150px;" />
+                </div>
+                
+                <div style="display:flex; flex-direction:column; gap:0.75rem;" id="inspect-list">
+                    <!-- Catalog Items Summary -->
+                    <div style="border-bottom:1px solid var(--border-glass); padding-bottom:0.75rem;" class="inspect-group">
+                        <strong style="font-size:0.85rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em;">Catalog Items</strong>
+                        <ul style="list-style:none; margin-top:0.4rem; padding-left:0.5rem; display:flex; flex-direction:column; gap:0.35rem;">
+                            {% for item in items %}
+                                <li class="inspect-row" style="font-size:0.9rem;">
+                                    <strong>{{ item.title }}</strong> <span class="tag-badge" style="font-size:0.65rem; padding:0.1rem 0.35rem;">{{ item.category }}</span>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+
+                    <!-- User Profiles Summary -->
+                    <div style="border-bottom:1px solid var(--border-glass); padding-bottom:0.75rem;" class="inspect-group">
+                        <strong style="font-size:0.85rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em;">User Profiles</strong>
+                        <ul style="list-style:none; margin-top:0.4rem; padding-left:0.5rem; display:flex; flex-direction:column; gap:0.35rem;">
+                            {% for u in users %}
+                                <li class="inspect-row" style="font-size:0.9rem;">
+                                    <strong>{{ u.name }}</strong> (Likes: {{ u.favorite_category or 'General' }})
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+
+                    <!-- Preference Mapping Summary -->
+                    <div class="inspect-group">
+                        <strong style="font-size:0.85rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em;">Preference Mappings</strong>
+                        <ul style="list-style:none; margin-top:0.4rem; padding-left:0.5rem; display:flex; flex-direction:column; gap:0.35rem;">
+                            {% for p in preferences %}
+                                {% set user_obj = users | selectattr("id", "equalto", p.user_id) | first %}
+                                {% set item_obj = items | selectattr("id", "equalto", p.item_id) | first %}
+                                <li class="inspect-row" style="font-size:0.9rem; color:var(--text-muted);">
+                                    {{ user_obj.name if user_obj else 'User '~p.user_id }}
+                                    <span style="color:var(--color-success); font-weight:bold;">{{ p.preference }}d</span>
+                                    {{ item_obj.title if item_obj else 'Item '~p.item_id }}
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <footer>
+        <p>Built with Python, Flask, Pandas, Scikit-learn and Chart.js. Created by Shripad Kantambatlu.</p>
+    </footer>
+
+    <script>
+        // Theme Toggle Logic
+        const themeToggleBtn = document.getElementById('theme-toggle');
+        const darkIcon = themeToggleBtn.querySelector('.dark-icon');
+        const lightIcon = themeToggleBtn.querySelector('.light-icon');
+
+        if (localStorage.getItem('theme') === 'dark' || (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.body.classList.add('dark-mode');
+            darkIcon.style.display = 'none';
+            lightIcon.style.display = 'block';
+        }
+
+        themeToggleBtn.addEventListener('click', () => {
+            if (document.body.classList.contains('dark-mode')) {
+                document.body.classList.remove('dark-mode');
+                localStorage.setItem('theme', 'light');
+                darkIcon.style.display = 'block';
+                lightIcon.style.display = 'none';
+            } else {
+                document.body.classList.add('dark-mode');
+                localStorage.setItem('theme', 'dark');
+                darkIcon.style.display = 'none';
+                lightIcon.style.display = 'block';
+            }
+        });
+
+        // Tab Switcher Logic
+        function switchTab(evt, tabId) {
+            // Hide all tab content
+            const tabPanels = document.querySelectorAll('.tab-panel');
+            tabPanels.forEach(panel => panel.classList.remove('active'));
+
+            // Remove active class from all buttons
+            const tabBtns = document.querySelectorAll('.tab-btn');
+            tabBtns.forEach(btn => btn.classList.remove('active'));
+
+            // Show active panel and button
+            document.getElementById(tabId).classList.add('active');
+            evt.currentTarget.classList.add('active');
+        }
+
+        // Live Search Filter for Database Inspect List
+        const searchInput = document.getElementById('inspect-search');
+        const inspectRows = document.querySelectorAll('.inspect-row');
+        searchInput.addEventListener('input', (e) => {
+            const query = e.target.value.toLowerCase().trim();
+            inspectRows.forEach(row => {
+                const text = row.textContent.toLowerCase();
+                if (text.includes(query)) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        });
+    </script>
+</body>
+</html>

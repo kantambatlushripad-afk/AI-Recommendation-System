@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AI Recommendation System — Dashboard</title>
+    <link rel="stylesheet" href="/static/css/styles.css" />
+    <!-- Load Chart.js from CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="bg-blobs">
+        <div class="bg-blob blob-1"></div>
+        <div class="bg-blob blob-2"></div>
+    </div>
+
+    <!-- Navigation Bar -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="/" class="nav-logo">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+                RecSystem AI
+            </a>
+            <ul class="nav-links">
+                <li><a href="/" class="nav-link">Match Preferences</a></li>
+                <li><a href="/dashboard" class="nav-link active">Dashboard</a></li>
+                <li><a href="/manager" class="nav-link">Data Manager</a></li>
+                <li>
+                    <button class="theme-toggle-btn" id="theme-toggle" aria-label="Toggle Theme">
+                        <svg class="dark-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+                        <svg class="light-icon" style="display:none;" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+                    </button>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+    <main>
+        <!-- Hero Section -->
+        <header class="hero">
+            <h1>Recommendation Analytics</h1>
+            <p>Monitor metrics, analyze category patterns, inspect top trending recommendations, and search through logs of calculations.</p>
+        </header>
+
+        <!-- Stats Overview Cards -->
+        <section class="dashboard-summary-cards">
+            <div class="stat-card">
+                <span class="stat-val">{{ items | length }}</span>
+                <span class="stat-label">Total Catalog Items</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-val">{{ users | length }}</span>
+                <span class="stat-label">User Profiles</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-val">{{ preferences | length }}</span>
+                <span class="stat-label">Preference Ratings</span>
+            </div>
+            <div class="stat-card">
+                {% set ns = namespace(rating_sum=0.0) %}
+                {% for item in items %}
+                    {% set ns.rating_sum = ns.rating_sum + (item.rating | float) %}
+                {% endfor %}
+                {% set avg_rating = (ns.rating_sum / (items | length)) | round(2) if items else 0.0 %}
+                <span class="stat-val">{{ avg_rating }} / 5</span>
+                <span class="stat-label">Average Item Rating</span>
+            </div>
+        </section>
+
+        <!-- Analytics Charts Grid -->
+        <section class="charts-grid">
+            <div class="chart-card">
+                <h3 class="panel-title" style="margin-bottom:1rem; font-size:1.15rem;">Item Category Distribution</h3>
+                <div class="chart-container">
+                    <canvas id="categoryChart"></canvas>
+                </div>
+            </div>
+
+            <div class="chart-card">
+                <h3 class="panel-title" style="margin-bottom:1rem; font-size:1.15rem;">Preferred Category Popularity</h3>
+                <div class="chart-container">
+                    <canvas id="preferenceChart"></canvas>
+                </div>
+            </div>
+
+            <div class="chart-card">
+                <h3 class="panel-title" style="margin-bottom:1rem; font-size:1.15rem;">Average Category Ratings</h3>
+                <div class="chart-container">
+                    <canvas id="ratingChart"></canvas>
+                </div>
+            </div>
+
+            <div class="chart-card">
+                <h3 class="panel-title" style="margin-bottom:1rem; font-size:1.15rem;">Most Recommended Items</h3>
+                <div class="chart-container">
+                    <canvas id="trendingChart"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <!-- Recommendation History Log Section -->
+        <section class="history-section glass-panel">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+                <h2 class="panel-title" style="margin-bottom:0;">Recommendation History</h2>
+                <input type="text" id="history-search" placeholder="Search logs (e.g. Guest, cosine)..." class="form-control" style="max-width: 320px;" />
+            </div>
+
+            <div class="history-table-wrapper">
+                <table class="history-table" id="history-table">
+                    <thead>
+                        <tr>
+                            <th>Timestamp</th>
+                            <th>User Profile</th>
+                            <th>Algorithm</th>
+                            <th>Top Match Output</th>
+                            <th>Interests Input</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% if history %}
+                            {% for log in history | reverse %}
+                                <tr>
+                                    <td>{{ log.timestamp[:19] | replace("T", " ") }}</td>
+                                    <td><strong>{{ log.user_id }}</strong></td>
+                                    <td><span class="card-category" style="font-size:0.7rem; padding:0.15rem 0.5rem;">{{ log.algorithm }}</span></td>
+                                    <td>
+                                        {% if log.results %}
+                                            {{ log.results[0].title }} (Score: {{ log.results[0].score }})
+                                        {% else %}
+                                            -
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="tags-container" style="margin:0; gap:0.25rem;">
+                                            {% for cat in log.selected_categories %}
+                                                <span class="tag-badge" style="background-color:var(--border-glass); color:var(--accent-start); font-size:0.7rem;">{{ cat }}</span>
+                                            {% endfor %}
+                                            {% for top in log.selected_topics %}
+                                                <span class="tag-badge" style="font-size:0.7rem;">#{{ top }}</span>
+                                            {% endfor %}
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        {% else %}
+                            <tr>
+                                <td colspan="5" style="text-align: center; color: var(--text-muted); padding: 2rem;">No recommendation calculations have been logged yet. Make a recommendation to start logging data.</td>
+                            </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>Built with Python, Flask, Pandas, Scikit-learn and Chart.js. Created by Shripad Kantambatlu.</p>
+    </footer>
+
+    <script>
+        // Theme Toggle Logic
+        const themeToggleBtn = document.getElementById('theme-toggle');
+        const darkIcon = themeToggleBtn.querySelector('.dark-icon');
+        const lightIcon = themeToggleBtn.querySelector('.light-icon');
+        let chartInstances = [];
+
+        if (localStorage.getItem('theme') === 'dark' || (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.body.classList.add('dark-mode');
+            darkIcon.style.display = 'none';
+            lightIcon.style.display = 'block';
+        }
+
+        themeToggleBtn.addEventListener('click', () => {
+            if (document.body.classList.contains('dark-mode')) {
+                document.body.classList.remove('dark-mode');
+                localStorage.setItem('theme', 'light');
+                darkIcon.style.display = 'block';
+                lightIcon.style.display = 'none';
+            } else {
+                document.body.classList.add('dark-mode');
+                localStorage.setItem('theme', 'dark');
+                darkIcon.style.display = 'none';
+                lightIcon.style.display = 'block';
+            }
+            updateChartsTheme();
+        });
+
+        // Search Filter for History
+        const searchInput = document.getElementById('history-search');
+        const tableRows = document.querySelectorAll('#history-table tbody tr');
+        searchInput.addEventListener('input', (e) => {
+            const query = e.target.value.toLowerCase().trim();
+            tableRows.forEach(row => {
+                const text = row.textContent.toLowerCase();
+                if (text.includes(query)) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        });
+
+        // Initialize Charts with API data
+        async function loadCharts() {
+            try {
+                const response = await fetch('/api/analytics');
+                const data = await response.json();
+                
+                const isDark = document.body.classList.contains('dark-mode');
+                const textColor = isDark ? '#e2e8f0' : '#334155';
+                const gridColor = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)';
+
+                // Chart 1: Item Category Distribution (Doughnut)
+                const ctxCat = document.getElementById('categoryChart').getContext('2d');
+                const catLabels = Object.keys(data.category_counts);
+                const catValues = Object.values(data.category_counts);
+                const catChart = new Chart(ctxCat, {
+                    type: 'doughnut',
+                    data: {
+                        labels: catLabels,
+                        datasets: [{
+                            data: catValues,
+                            backgroundColor: ['#4f46e5', '#10b981', '#f59e0b', '#06b6d4', '#ec4899', '#8b5cf6'],
+                            borderWidth: 1,
+                            borderColor: isDark ? '#111827' : '#ffffff'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: { color: textColor, font: { family: 'Inter' } }
+                            }
+                        }
+                    }
+                });
+                chartInstances.push(catChart);
+
+                // Chart 2: Preferences Category Popularity (Bar)
+                const ctxPref = document.getElementById('preferenceChart').getContext('2d');
+                const prefLabels = Object.keys(data.preference_category_counts);
+                const prefValues = Object.values(data.preference_category_counts);
+                const prefChart = new Chart(ctxPref, {
+                    type: 'bar',
+                    data: {
+                        labels: prefLabels,
+                        datasets: [{
+                            label: 'Likes',
+                            data: prefValues,
+                            backgroundColor: 'rgba(99, 102, 241, 0.75)',
+                            borderColor: '#6366f1',
+                            borderWidth: 1,
+                            borderRadius: 6
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            x: { grid: { color: gridColor }, ticks: { color: textColor } },
+                            y: { grid: { color: gridColor }, ticks: { color: textColor, stepSize: 1 } }
+                        },
+                        plugins: {
+                            legend: { display: false }
+                        }
+                    }
+                });
+                chartInstances.push(prefChart);
+
+                // Chart 3: Average Rating by Category (Radar)
+                const ctxRating = document.getElementById('ratingChart').getContext('2d');
+                const rateLabels = Object.keys(data.average_ratings);
+                const rateValues = Object.values(data.average_ratings);
+                const ratingChart = new Chart(ctxRating, {
+                    type: 'radar',
+                    data: {
+                        labels: rateLabels,
+                        datasets: [{
+                            label: 'Avg Rating',
+                            data: rateValues,
+                            backgroundColor: 'rgba(139, 92, 246, 0.2)',
+                            borderColor: '#8b5cf6',
+                            borderWidth: 2,
+                            pointBackgroundColor: '#8b5cf6'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            r: {
+                                angleLines: { color: gridColor },
+                                grid: { color: gridColor },
+                                pointLabels: { color: textColor, font: { family: 'Inter', weight: 'bold' } },
+                                ticks: { display: false },
+                                min: 0,
+                                max: 5
+                            }
+                        },
+                        plugins: {
+                            legend: { display: false }
+                        }
+                    }
+                });
+                chartInstances.push(ratingChart);
+
+                // Chart 4: Trending Recommended Items (Horizontal Bar)
+                const ctxTrending = document.getElementById('trendingChart').getContext('2d');
+                const trendLabels = Object.keys(data.top_items);
+                const trendValues = Object.values(data.top_items);
+                const trendingChart = new Chart(ctxTrending, {
+                    type: 'bar',
+                    data: {
+                        labels: trendLabels,
+                        datasets: [{
+                            data: trendValues,
+                            backgroundColor: 'rgba(6, 182, 212, 0.75)',
+                            borderColor: '#06b6d4',
+                            borderWidth: 1,
+                            borderRadius: 6
+                        }]
+                    },
+                    options: {
+                        indexAxis: 'y',
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            x: { grid: { color: gridColor }, ticks: { color: textColor, stepSize: 1 } },
+                            y: { grid: { color: gridColor }, ticks: { color: textColor } }
+                        },
+                        plugins: {
+                            legend: { display: false }
+                        }
+                    }
+                });
+                chartInstances.push(trendingChart);
+
+            } catch (err) {
+                console.error("Failed to render charts: ", err);
+            }
+        }
+
+        // Dynamically toggle colors in chart configs when theme changes
+        function updateChartsTheme() {
+            const isDark = document.body.classList.contains('dark-mode');
+            const textColor = isDark ? '#e2e8f0' : '#334155';
+            const gridColor = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)';
+            const borderCol = isDark ? '#111827' : '#ffffff';
+
+            chartInstances.forEach(chart => {
+                if (chart.config.type === 'doughnut') {
+                    chart.data.datasets[0].borderColor = borderCol;
+                    chart.options.plugins.legend.labels.color = textColor;
+                } else if (chart.config.type === 'radar') {
+                    chart.options.scales.r.angleLines.color = gridColor;
+                    chart.options.scales.r.grid.color = gridColor;
+                    chart.options.scales.r.pointLabels.color = textColor;
+                } else {
+                    chart.options.scales.x.grid.color = gridColor;
+                    chart.options.scales.x.ticks.color = textColor;
+                    chart.options.scales.y.grid.color = gridColor;
+                    chart.options.scales.y.ticks.color = textColor;
+                }
+                chart.update();
+            });
+        }
+
+        window.addEventListener('load', loadCharts);
+    </script>
+</body>
+</html>

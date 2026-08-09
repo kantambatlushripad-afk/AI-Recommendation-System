@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AI Preference Matcher — Home</title>
+    <link rel="stylesheet" href="/static/css/styles.css" />
+</head>
+<body>
+    <div class="bg-blobs">
+        <div class="bg-blob blob-1"></div>
+        <div class="bg-blob blob-2"></div>
+    </div>
+
+    <!-- Navigation Bar -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="/" class="nav-logo">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+                RecSystem AI
+            </a>
+            <ul class="nav-links">
+                <li><a href="/" class="nav-link active">Match Preferences</a></li>
+                <li><a href="/dashboard" class="nav-link">Dashboard</a></li>
+                <li><a href="/manager" class="nav-link">Data Manager</a></li>
+                <li>
+                    <button class="theme-toggle-btn" id="theme-toggle" aria-label="Toggle Theme">
+                        <!-- Dark Mode Icon -->
+                        <svg class="dark-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+                        <!-- Light Mode Icon (hidden by default) -->
+                        <svg class="light-icon" style="display:none;" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+                    </button>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+    <main>
+        <!-- Hero Section -->
+        <header class="hero">
+            <h1>Dynamic Preference Matcher</h1>
+            <p>Select your user profile or choose tags and categories manually. Our similarity engines will compute and rank the best-matched recommendations for you in real-time.</p>
+        </header>
+
+        <!-- Preference Panels -->
+        <section class="glass-panel">
+            <h2 class="panel-title">Build Your Preferences</h2>
+            
+            <form method="POST" action="/" class="preference-form">
+                <!-- Profile Settings Bar -->
+                <div class="settings-bar">
+                    <div class="form-group">
+                        <label for="user-select" class="form-label">Active Profile</label>
+                        <select name="user_id" id="user-select" class="form-control">
+                            <option value="Guest">Guest Mode</option>
+                            {% for u in users %}
+                                <option value="{{ u.id }}" {% if selected_user == u.id %}selected{% endif %}>{{ u.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="algorithm" class="form-label">Similarity Metric</label>
+                        <select name="algorithm" id="algorithm" class="form-control">
+                            <option value="cosine">Cosine Similarity</option>
+                            <option value="jaccard">Jaccard Index</option>
+                            <option value="euclidean">Euclidean Similarity</option>
+                            <option value="pearson">Pearson Correlation</option>
+                            <option value="tfidf">TF-IDF (Content-Based)</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group" style="grid-column: span 2;">
+                        <label for="top_n" class="form-label">Count limit: <span id="top-n-val">5</span></label>
+                        <input type="range" name="top_n" id="top_n" min="1" max="15" value="5" class="form-control" style="padding: 0.5rem;" />
+                    </div>
+                </div>
+
+                <!-- Category selection panel -->
+                <div class="form-group" style="margin-bottom: 2rem;">
+                    <label class="form-label">Categories Preference</label>
+                    <div class="selection-grid">
+                        {% for category in categories %}
+                            <label class="checkbox-card-wrapper">
+                                <input type="checkbox" name="category" value="{{ category }}" class="category-checkbox" />
+                                <span class="checkbox-card-ui">{{ category }}</span>
+                            </label>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <!-- Topic selection panel with search filter -->
+                <div class="form-group" style="margin-bottom: 2.5rem;">
+                    <div class="search-filter-box">
+                        <label class="form-label" style="margin: 0; align-self: center;">Favorite Topics / Tags</label>
+                        <input type="text" id="topic-search" placeholder="Search tags (e.g. ai, python)..." class="form-control search-box" />
+                    </div>
+                    <div class="selection-grid" id="topics-grid">
+                        {% for topic in topics %}
+                            <label class="checkbox-card-wrapper" data-tag="{{ topic | lower }}">
+                                <input type="checkbox" name="topic" value="{{ topic }}" class="topic-checkbox" />
+                                <span class="checkbox-card-ui">#{{ topic }}</span>
+                            </label>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary" style="padding: 1rem 2.5rem; width: 100%;">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                        Compute Recommendations
+                    </button>
+                </div>
+            </form>
+        </section>
+    </main>
+
+    <footer>
+        <p>Built with Python, Flask, Pandas, Scikit-learn and Chart.js. Created by Shripad Kantambatlu.</p>
+    </footer>
+
+    <!-- Theme Toggle & Profile Loader Script -->
+    <script>
+        // Theme Toggle Logic
+        const themeToggleBtn = document.getElementById('theme-toggle');
+        const darkIcon = themeToggleBtn.querySelector('.dark-icon');
+        const lightIcon = themeToggleBtn.querySelector('.light-icon');
+
+        // Apply saved theme
+        if (localStorage.getItem('theme') === 'dark' || (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.body.classList.add('dark-mode');
+            darkIcon.style.display = 'none';
+            lightIcon.style.display = 'block';
+        }
+
+        themeToggleBtn.addEventListener('click', () => {
+            if (document.body.classList.contains('dark-mode')) {
+                document.body.classList.remove('dark-mode');
+                localStorage.setItem('theme', 'light');
+                darkIcon.style.display = 'block';
+                lightIcon.style.display = 'none';
+            } else {
+                document.body.classList.add('dark-mode');
+                localStorage.setItem('theme', 'dark');
+                darkIcon.style.display = 'none';
+                lightIcon.style.display = 'block';
+            }
+        });
+
+        // Top N slider display update
+        const topNSlider = document.getElementById('top_n');
+        const topNVal = document.getElementById('top-n-val');
+        topNSlider.addEventListener('input', (e) => {
+            topNVal.textContent = e.target.value;
+        });
+
+        // Live Search Filter for Topics
+        const topicSearch = document.getElementById('topic-search');
+        const topicWrappers = document.querySelectorAll('#topics-grid .checkbox-card-wrapper');
+
+        topicSearch.addEventListener('input', (e) => {
+            const query = e.target.value.toLowerCase().trim();
+            topicWrappers.forEach(wrapper => {
+                const tagVal = wrapper.getAttribute('data-tag');
+                if (tagVal.includes(query)) {
+                    wrapper.style.display = 'block';
+                } else {
+                    wrapper.style.display = 'none';
+                }
+            });
+        });
+
+        // Load User Profile dynamically when dropdown changes
+        const userSelect = document.getElementById('user-select');
+        const categoryCheckboxes = document.querySelectorAll('.category-checkbox');
+        const topicCheckboxes = document.querySelectorAll('.topic-checkbox');
+
+        userSelect.addEventListener('change', async (e) => {
+            const userId = e.target.value;
+            if (userId === 'Guest') {
+                // Clear all checkboxes
+                categoryCheckboxes.forEach(cb => cb.checked = false);
+                topicCheckboxes.forEach(cb => cb.checked = false);
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/user-profile/${userId}`);
+                const data = await response.json();
+                
+                // Clear previous
+                categoryCheckboxes.forEach(cb => cb.checked = false);
+                topicCheckboxes.forEach(cb => cb.checked = false);
+
+                // Check categories
+                data.categories.forEach(cat => {
+                    const match = Array.from(categoryCheckboxes).find(cb => cb.value === cat);
+                    if (match) match.checked = true;
+                });
+
+                // Check topics
+                data.tags.forEach(tag => {
+                    const match = Array.from(topicCheckboxes).find(cb => cb.value.toLowerCase() === tag.toLowerCase());
+                    if (match) match.checked = true;
+                });
+            } catch (err) {
+                console.error("Failed to load user profile: ", err);
+            }
+        });
+
+        // Trigger load on load if user_id query param is present
+        window.addEventListener('load', () => {
+            if (userSelect.value !== 'Guest') {
+                userSelect.dispatchEvent(new Event('change'));
+            }
+        });
+    </script>
+</body>
+</html>
